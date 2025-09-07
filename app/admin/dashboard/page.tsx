@@ -13,13 +13,9 @@ import {
   X,
   BarChart3,
   UserCheck,
-  CreditCard,
   MessageSquare,
   Shield,
-  Database,
   Zap,
-  AlertTriangle,
-  CheckCircle,
   Clock,
   Star
 } from 'lucide-react';
@@ -42,7 +38,7 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   // Mock data - replace with real API calls
-  const [stats, setStats] = useState<DashboardStats>({
+  const [stats] = useState<DashboardStats>({
     totalUsers: 1247,
     activeUsers: 892,
     revenue: 45680,
@@ -100,7 +96,7 @@ export default function AdminDashboard() {
     title: string;
     value: string | number;
     change?: string;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     color?: string;
   }) => (
     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-200">
@@ -122,7 +118,7 @@ export default function AdminDashboard() {
   );
 
   const SidebarItem = ({ icon: Icon, label, active, onClick }: {
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     label: string;
     active: boolean;
     onClick: () => void;
