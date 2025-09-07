@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   description: "Advanced AI-powered poker strategy assistant with game theory optimal analysis",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
