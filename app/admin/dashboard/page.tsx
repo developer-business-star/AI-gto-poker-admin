@@ -48,6 +48,7 @@ export default function AdminDashboard() {
     responseTime: 1.2,
     satisfactionScore: 4.7
   });
+  
 
   const [recentActivity] = useState([
     { id: 1, user: 'John Doe', action: 'Completed hand analysis', time: '2 minutes ago', type: 'success' },
