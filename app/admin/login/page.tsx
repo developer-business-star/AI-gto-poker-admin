@@ -12,29 +12,48 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Simulate authentication - replace with real auth logic
-    console.log('Login attempt:', formData); // Debug log
-    
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      // Store auth token in both localStorage and cookies
-      localStorage.setItem('adminToken', 'admin-auth-token');
+    try {
+      console.log('Admin login attempt:', formData);
       
-      // Set cookie for server-side middleware
-      document.cookie = 'adminToken=admin-auth-token; path=/; max-age=86400; SameSite=Lax';
-      
-      console.log('Authentication successful, redirecting...'); // Debug log
-      
-      // Force a page refresh to ensure middleware picks up the cookie
-      window.location.href = '/admin/dashboard';
-    } else {
-      console.log('Authentication failed'); // Debug log
-      setError('Invalid username or password');
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log('Admin authentication successful, user:', data.data.user.email);
+        console.log('Admin token should be set as cookie');
+        
+        // Also store token in localStorage as backup
+        localStorage.setItem('adminToken', data.data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.data.user));
+        
+        // Wait a moment for cookie to be set, then redirect
+        setTimeout(() => {
+          console.log('Redirecting to dashboard...');
+          // Use router push instead of window.location
+          router.push('/admin/dashboard');
+        }, 200);
+      } else {
+        console.log('Admin authentication failed:', data.error);
+        setError(data.error || 'Login failed. Please try again.');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      setError('Network error. Please check your connection and try again.');
       setIsLoading(false);
     }
   };
@@ -142,14 +161,6 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
-            <p className="text-xs text-slate-400 text-center mb-2">Demo Credentials:</p>
-            <div className="text-xs text-slate-300 space-y-1">
-              <p><span className="text-slate-400">Username:</span> admin</p>
-              <p><span className="text-slate-400">Password:</span> admin123</p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

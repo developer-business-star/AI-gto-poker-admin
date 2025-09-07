@@ -31,10 +31,20 @@ interface DashboardStats {
   satisfactionScore: number;
 }
 
+interface AdminUser {
+  id: string;
+  fullName: string;
+  email: string;
+  adminAllowed: boolean;
+  lastLogin: string;
+}
+
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   // Mock data - replace with real API calls
@@ -67,30 +77,96 @@ export default function AdminDashboard() {
   ]);
 
   useEffect(() => {
-    // Check authentication - check both localStorage and cookies
-    const token = localStorage.getItem('adminToken') || 
-                  document.cookie.split(';').find(c => c.trim().startsWith('adminToken='))?.split('=')[1];
-    
-    if (!token) {
-      router.push('/admin/login');
-    } else {
-      setIsAuthenticated(true);
-    }
+    const verifyAuth = async () => {
+      try {
+        console.log('Dashboard: Starting authentication verification...');
+        
+        // Get token from cookies first, then localStorage as backup
+        const cookies = document.cookie.split(';');
+        console.log('Dashboard: All cookies:', document.cookie);
+        
+        const tokenCookie = cookies.find(c => c.trim().startsWith('adminToken='));
+        let token = tokenCookie ? tokenCookie.split('=')[1] : null;
+
+        // If no cookie token, try localStorage
+        if (!token) {
+          token = localStorage.getItem('adminToken');
+          console.log('Dashboard: No cookie token, trying localStorage:', !!token);
+        }
+
+        console.log('Dashboard: Final token found:', !!token);
+        console.log('Dashboard: Token length:', token ? token.length : 0);
+
+        if (!token) {
+          console.log('Dashboard: No token found anywhere, redirecting to login');
+          router.push('/admin/login');
+          return;
+        }
+
+        console.log('Dashboard: Calling verify API...');
+        
+        // Verify token with backend
+        const response = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const data = await response.json();
+        console.log('Dashboard: Verify API response:', { success: data.success, status: response.status });
+
+        if (response.ok && data.success) {
+          console.log('Dashboard: Authentication successful, user:', data.data.user.email);
+          setAdminUser(data.data.user);
+          setIsAuthenticated(true);
+        } else {
+          console.log('Dashboard: Authentication failed, redirecting to login');
+          // Token is invalid, redirect to login
+          router.push('/admin/login');
+        }
+      } catch (error) {
+        console.error('Dashboard: Auth verification error:', error);
+        router.push('/admin/login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifyAuth();
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    // Clear the cookie
-    document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    router.push('/admin/login');
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear server-side session
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear localStorage
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      
+      // Clear local state and redirect
+      setIsAuthenticated(false);
+      setAdminUser(null);
+      router.push('/admin/login');
+    }
   };
 
-  if (!isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect to login
   }
 
   const StatCard = ({ title, value, change, icon: Icon, color = 'purple' }: {
@@ -233,10 +309,16 @@ export default function AdminDashboard() {
             </button>
             <h1 className="text-2xl font-bold text-white capitalize">{activeTab}</h1>
             <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-white font-medium">{adminUser?.fullName}</p>
+                <p className="text-slate-400 text-sm">{adminUser?.email}</p>
+              </div>
               <div className="relative">
                 <div className="w-3 h-3 bg-green-400 rounded-full absolute -top-1 -right-1 animate-pulse"></div>
                 <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">A</span>
+                  <span className="text-white font-semibold text-sm">
+                    {adminUser?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                  </span>
                 </div>
               </div>
             </div>
