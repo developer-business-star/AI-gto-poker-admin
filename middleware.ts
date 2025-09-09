@@ -8,8 +8,8 @@ export async function middleware(request: NextRequest) {
   
   // Check if the user is trying to access admin routes
   if (pathname.startsWith('/admin')) {
-    // Allow access to login page
-    if (pathname === '/admin/login') {
+    // Allow access to login page and root admin page
+    if (pathname === '/admin/login' || pathname === '/admin') {
       return NextResponse.next();
     }
     

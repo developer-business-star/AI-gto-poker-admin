@@ -38,6 +38,11 @@ export default function AdminLayout({ children, activeTab, title }: AdminLayoutP
   const router = useRouter();
 
   useEffect(() => {
+    // Only run authentication on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const verifyAuth = async () => {
       try {
         console.log('AdminLayout: Starting authentication verification...');

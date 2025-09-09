@@ -143,7 +143,6 @@ export default function UsersPage() {
   const SortButton = ({ field, children }: { field: keyof DatabaseUser; children: React.ReactNode }) => {
     const isActive = sortField === field;
     const isAsc = isActive && sortDirection === 'asc';
-    const isDesc = isActive && sortDirection === 'desc';
 
     return (
       <button
