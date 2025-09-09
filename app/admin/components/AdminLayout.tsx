@@ -190,7 +190,7 @@ export default function AdminLayout({ children, activeTab, title }: AdminLayoutP
           </button>
         </div>
 
-        <nav className="mt-6 px-4 space-y-2">
+        <nav className="mt-6 px-4 space-y-2 admin-scrollable">
           <SidebarItem
             icon={BarChart3}
             label="Overview"
@@ -276,7 +276,7 @@ export default function AdminLayout({ children, activeTab, title }: AdminLayoutP
         </header>
 
         {/* Content */}
-        <main className="p-6">
+        <main className="p-6 admin-scrollable">
           {children}
         </main>
       </div>

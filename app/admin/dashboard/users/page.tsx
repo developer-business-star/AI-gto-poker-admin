@@ -346,7 +346,7 @@ export default function UsersPage() {
               <span className="ml-2 text-slate-300">Loading users from database...</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto admin-table-container">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/10">
