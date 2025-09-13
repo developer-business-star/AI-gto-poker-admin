@@ -26,6 +26,7 @@ interface DatabaseUser {
   updatedAt: string;
   planStatus: string;
   userUsage: number;
+  availableUsage: number;
 }
 
 interface AdminUser {
@@ -357,6 +358,9 @@ export default function UsersPage() {
                       <SortButton field="planStatus">Plan</SortButton>
                     </th>
                     <th className="text-left text-slate-300 py-3 px-4">
+                      <SortButton field="availableUsage">Available Usage</SortButton>
+                    </th>
+                    <th className="text-left text-slate-300 py-3 px-4">
                       <SortButton field="userUsage">Usage</SortButton>
                     </th>
                     <th className="text-left text-slate-300 py-3 px-4">
@@ -394,6 +398,11 @@ export default function UsersPage() {
                             'bg-slate-500/20 text-slate-300'
                           }`}>
                             {planLabel}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-white font-medium">
+                            {user.availableUsage}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -444,7 +453,7 @@ export default function UsersPage() {
                     );
                   }) : (
                     <tr>
-                      <td colSpan={8} className="py-8 px-4 text-center text-slate-400">
+                      <td colSpan={9} className="py-8 px-4 text-center text-slate-400">
                         {searchQuery 
                           ? `No users found matching "${searchQuery}"` 
                           : (realUsers.length > 0 ? 'No regular users found (admin excluded)' : 'No users found in database')
