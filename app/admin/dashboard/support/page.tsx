@@ -52,38 +52,6 @@ export default function SupportPage() {
   return (
     <AdminLayout activeTab="support" title="Support Center">
       <div className="space-y-6">
-        {/* Support Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-300 text-sm">Open Tickets</p>
-                <p className="text-2xl font-bold text-white">23</p>
-              </div>
-              <div className="text-blue-400 text-2xl">🎫</div>
-            </div>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-300 text-sm">High Priority</p>
-                <p className="text-2xl font-bold text-red-400">3</p>
-              </div>
-              <div className="text-red-400 text-2xl">🚨</div>
-            </div>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-300 text-sm">Avg Response</p>
-                <p className="text-2xl font-bold text-green-400">2.4h</p>
-              </div>
-              <div className="text-green-400 text-2xl">⏱️</div>
-            </div>
-          </div>
-        </div>
 
         {/* Support Contact Table */}
         <SupportContactTable 
