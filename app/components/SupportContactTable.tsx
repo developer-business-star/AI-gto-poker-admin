@@ -352,19 +352,6 @@ const SupportContactTable: React.FC<SupportContactTableProps> = ({
             <tr className="border-b border-white/20">
               <th className="text-left py-3 px-2 text-slate-300 font-medium">
                 <button 
-                  onClick={() => handleSort('ticketId')}
-                  className="flex items-center hover:text-white transition-colors group"
-                >
-                  Ticket ID
-                  {sortField === 'ticketId' ? (
-                    <span className="ml-1 text-blue-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  ) : (
-                    <span className="ml-1 text-slate-500 opacity-0 group-hover:opacity-100">↕</span>
-                  )}
-                </button>
-              </th>
-              <th className="text-left py-3 px-2 text-slate-300 font-medium">
-                <button 
                   onClick={() => handleSort('type')}
                   className="flex items-center hover:text-white transition-colors group"
                 >
@@ -459,9 +446,6 @@ const SupportContactTable: React.FC<SupportContactTableProps> = ({
                   key={ticket.id || ticket.ticketId || `ticket-${index}`} 
                   className="border-b border-white/10 hover:bg-white/5 transition-colors"
                 >
-                  <td className="py-3 px-2">
-                    <span className="text-blue-400 font-mono text-sm">{ticket.ticketId}</span>
-                  </td>
                   <td className="py-3 px-2">
                     <div className="flex items-center">
                       <span className="mr-2">{getTypeIcon(ticket.type)}</span>
