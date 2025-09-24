@@ -16,11 +16,49 @@ interface DashboardStats {
   totalUsers: number;
   activeUsers: number;
   revenue: number;
-  conversionRate: number;
   monthlyGrowth: number;
   aiAccuracy: number;
-  responseTime: number;
-  satisfactionScore: number;
+}
+
+interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  recentSignups: number;
+  growthPercentage: string;
+  usersByPlan: {
+    free: number;
+    premium: number;
+    basic: number;
+  };
+  timestamp: string;
+}
+
+interface AiStats {
+  aiAccuracy: number;
+  totalAnalyses: number;
+  recentAnalyses: number;
+  growthPercentage: string;
+  confidenceDistribution: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+  timestamp: string;
+}
+
+interface Activity {
+  id: string;
+  user: string;
+  action: string;
+  timeDisplay: string;
+  type: 'success' | 'warning' | 'upgrade' | 'info';
+  source: 'analysis' | 'registration' | 'support' | 'login';
+}
+
+interface ActivityData {
+  activities: Activity[];
+  totalActivities: number;
+  timestamp: string;
 }
 
 interface DatabaseUser {
@@ -47,17 +85,18 @@ interface AdminUser {
 export default function OverviewPage() {
   const [realUsers, setRealUsers] = useState<DatabaseUser[]>([]);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [aiStats, setAiStats] = useState<AiStats | null>(null);
+  const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Stats data with real user counts
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     activeUsers: 0,
     revenue: 45680, // Keep mock data for revenue
-    conversionRate: 12.5, // Keep mock data for conversion
     monthlyGrowth: 23.8, // Keep mock data for growth
     aiAccuracy: 94.2, // Keep mock data for AI
-    responseTime: 1.2, // Keep mock data for response time
-    satisfactionScore: 4.7 // Keep mock data for satisfaction
   });
 
   // Filter users to exclude admin
@@ -67,36 +106,92 @@ export default function OverviewPage() {
     });
   }, [realUsers, adminUser]);
 
-  // Generate recent activity with real user names
-  const [recentActivity, setRecentActivity] = useState([
-    { id: 1, user: 'Loading...', action: 'Completed hand analysis', time: '2 minutes ago', type: 'success' },
-    { id: 2, user: 'Loading...', action: 'Upgraded to Premium', time: '5 minutes ago', type: 'upgrade' },
-    { id: 3, user: 'Loading...', action: 'Reported issue with AI response', time: '12 minutes ago', type: 'warning' },
-    { id: 4, user: 'Loading...', action: 'Downloaded strategy guide', time: '18 minutes ago', type: 'info' },
-    { id: 5, user: 'Loading...', action: 'Started free trial', time: '25 minutes ago', type: 'success' },
-  ]);
+  // Function to fetch recent activity from database
+  const fetchRecentActivity = async () => {
+    try {
+      console.log('Overview: Fetching recent activity from database...');
 
-  // Memoize base activities to prevent recreation on every render
-  const baseActivities = useMemo(() => [
-    { id: 1, action: 'Completed hand analysis', time: '2 minutes ago', type: 'success' },
-    { id: 2, action: 'Upgraded to Premium', time: '5 minutes ago', type: 'upgrade' },
-    { id: 3, action: 'Reported issue with AI response', time: '12 minutes ago', type: 'warning' },
-    { id: 4, action: 'Downloaded strategy guide', time: '18 minutes ago', type: 'info' },
-    { id: 5, action: 'Started free trial', time: '25 minutes ago', type: 'success' },
-  ], []);
+      const response = await fetch('/api/users/recent-activity', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-  // Update recent activity with real user names (excluding admin)
-  useEffect(() => {
-    if (filteredUsers.length > 0) {
-      const updatedActivities = baseActivities.map(activity => ({
-        ...activity,
-        user: filteredUsers[(activity.id - 1) % filteredUsers.length]?.fullName || 'Unknown User'
-      }));
+      const data = await response.json();
+      console.log('Overview: Activity response:', { success: data.success });
 
-      setRecentActivity(updatedActivities);
-      console.log('Overview: Updated recent activity with real user names (excluding admin)');
+      if (response.ok && data.success) {
+        setActivityData(data.data);
+        console.log('Overview: Successfully loaded recent activity:', data.data.activities.length, 'activities');
+      } else {
+        console.error('Overview: Failed to fetch recent activity:', data.error);
+      }
+    } catch (error) {
+      console.error('Overview: Activity fetch error:', error);
     }
-  }, [filteredUsers, baseActivities]);
+  };
+
+  // Function to fetch user statistics from database
+  const fetchUserStats = async () => {
+    try {
+      console.log('Overview: Fetching user statistics from database...');
+
+      const response = await fetch('/api/users/stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      console.log('Overview: User stats response:', { success: data.success });
+
+      if (response.ok && data.success) {
+        setUserStats(data.data);
+        setStats(prev => ({
+          ...prev,
+          totalUsers: data.data.totalUsers,
+          activeUsers: data.data.activeUsers
+        }));
+        console.log('Overview: Successfully loaded user statistics:', data.data);
+      } else {
+        console.error('Overview: Failed to fetch user stats:', data.error);
+      }
+    } catch (error) {
+      console.error('Overview: User stats fetch error:', error);
+    }
+  };
+
+  // Function to fetch AI statistics from database
+  const fetchAiStats = async () => {
+    try {
+      console.log('Overview: Fetching AI statistics from database...');
+
+      const response = await fetch('/api/users/ai-stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      console.log('Overview: AI stats response:', { success: data.success });
+
+      if (response.ok && data.success) {
+        setAiStats(data.data);
+        setStats(prev => ({
+          ...prev,
+          aiAccuracy: data.data.aiAccuracy
+        }));
+        console.log('Overview: Successfully loaded AI statistics:', data.data);
+      } else {
+        console.error('Overview: Failed to fetch AI stats:', data.error);
+      }
+    } catch (error) {
+      console.error('Overview: AI stats fetch error:', error);
+    }
+  };
 
   // Function to fetch real users from database
   const fetchUsers = async () => {
@@ -124,9 +219,10 @@ export default function OverviewPage() {
     }
   };
 
-  // Get admin user from localStorage/cookies
+  // Get admin user from localStorage/cookies and fetch data
   useEffect(() => {
-    const getAdminUser = async () => {
+    const initializeData = async () => {
+      setLoading(true);
       try {
         const cookies = document.cookie.split(';');
         const tokenCookie = cookies.find(c => c.trim().startsWith('adminToken='));
@@ -150,28 +246,37 @@ export default function OverviewPage() {
             setAdminUser(data.data.user);
           }
         }
+
+        // Fetch user statistics, AI statistics, activity, and users in parallel
+        await Promise.all([
+          fetchUserStats(),
+          fetchAiStats(),
+          fetchRecentActivity(),
+          fetchUsers()
+        ]);
+
       } catch (error) {
-        console.error('Overview: Error getting admin user:', error);
+        console.error('Overview: Error initializing data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    getAdminUser();
-    fetchUsers();
+    initializeData();
   }, []);
 
-  // Update stats when users are loaded (excluding current admin)
+  // Auto-refresh activity every 30 seconds
   useEffect(() => {
-    if (realUsers.length > 0 && adminUser) {
-      const usersExcludingAdmin = realUsers.filter(user => user.email !== adminUser.email);
-      const activeUsersCount = usersExcludingAdmin.filter(user => user.isActive).length;
-      setStats(prev => ({
-        ...prev,
-        totalUsers: usersExcludingAdmin.length,
-        activeUsers: activeUsersCount
-      }));
-      console.log('Overview: Updated stats (excluding admin) - Total users:', usersExcludingAdmin.length, 'Active users:', activeUsersCount);
+    if (!loading) {
+      const interval = setInterval(() => {
+        fetchRecentActivity();
+      }, 30000); // Refresh every 30 seconds
+
+      return () => clearInterval(interval);
     }
-  }, [realUsers, adminUser]);
+  }, [loading]);
+
+  // Note: Stats are now updated directly from the user statistics API
 
   const StatCard = ({ title, value, change, icon: Icon, color = 'purple' }: {
     title: string;
@@ -205,15 +310,15 @@ export default function OverviewPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Users"
-            value={stats.totalUsers.toLocaleString()}
-            change="+12.5%"
+            value={loading ? '...' : stats.totalUsers.toLocaleString()}
+            change={userStats?.growthPercentage || '+12.5%'}
             icon={Users}
             color="blue"
           />
           <StatCard
             title="Active Users"
-            value={stats.activeUsers.toLocaleString()}
-            change="+8.2%"
+            value={loading ? '...' : stats.activeUsers.toLocaleString()}
+            change="+···%"
             icon={UserCheck}
             color="green"
           />
@@ -225,59 +330,66 @@ export default function OverviewPage() {
             color="purple"
           />
           <StatCard
-            title="Conversion Rate"
-            value={`${stats.conversionRate}%`}
-            change="+2.1%"
-            icon={TrendingUp}
-            color="orange"
-          />
-        </div>
-
-        {/* AI Performance Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard
             title="AI Accuracy"
-            value={`${stats.aiAccuracy}%`}
-            change="+1.2%"
+            value={loading ? '...' : `${stats.aiAccuracy}%`}
+            change={aiStats?.growthPercentage || '+1.2%'}
             icon={Zap}
             color="green"
-          />
-          <StatCard
-            title="Response Time"
-            value={`${stats.responseTime}s`}
-            change="-0.3s"
-            icon={Clock}
-            color="blue"
-          />
-          <StatCard
-            title="Satisfaction"
-            value={`${stats.satisfactionScore}/5`}
-            change="+0.2"
-            icon={Star}
-            color="yellow"
           />
         </div>
 
         {/* Recent Activity */}
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+            <button 
+              onClick={fetchRecentActivity}
+              className="text-slate-400 hover:text-white text-sm transition-colors"
+              title="Refresh Activity"
+            >
+              🔄 Refresh
+            </button>
+          </div>
           <div className="space-y-3">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                <div className="flex items-center">
-                  <div className={`w-2 h-2 rounded-full mr-3 ${
-                    activity.type === 'success' ? 'bg-green-400' :
-                    activity.type === 'warning' ? 'bg-yellow-400' :
-                    activity.type === 'upgrade' ? 'bg-purple-400' : 'bg-blue-400'
-                  }`} />
-                  <div>
-                    <p className="text-white font-medium">{activity.user}</p>
-                    <p className="text-slate-300 text-sm">{activity.action}</p>
+            {loading ? (
+              // Loading state
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg animate-pulse">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full mr-3 bg-slate-600" />
+                    <div>
+                      <div className="h-4 bg-slate-600 rounded w-20 mb-1"></div>
+                      <div className="h-3 bg-slate-600 rounded w-32"></div>
+                    </div>
                   </div>
+                  <div className="h-3 bg-slate-600 rounded w-16"></div>
                 </div>
-                <span className="text-slate-400 text-sm">{activity.time}</span>
+              ))
+            ) : activityData?.activities.length === 0 ? (
+              // Empty state
+              <div className="text-center py-8 text-slate-400">
+                <p>No recent activity found</p>
+                <p className="text-sm mt-1">Activity will appear here as users interact with the system</p>
               </div>
-            ))}
+            ) : (
+              // Real activity data
+              activityData?.activities.map((activity) => (
+                <div key={activity.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full mr-3 ${
+                      activity.type === 'success' ? 'bg-green-400' :
+                      activity.type === 'warning' ? 'bg-yellow-400' :
+                      activity.type === 'upgrade' ? 'bg-purple-400' : 'bg-blue-400'
+                    }`} />
+                    <div>
+                      <p className="text-white font-medium">{activity.user}</p>
+                      <p className="text-slate-300 text-sm">{activity.action}</p>
+                    </div>
+                  </div>
+                  <span className="text-slate-400 text-sm">{activity.timeDisplay}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
